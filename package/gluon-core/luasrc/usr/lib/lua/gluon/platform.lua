@@ -64,6 +64,11 @@ function M.is_outdoor_device()
 	}) then
 		return true
 
+	elseif M.match('mediatek', 'filogic', {
+		'cudy,ap3000outdoor-v1'
+	}) then
+		return true
+
 	elseif M.match('ramips', 'mt7621', {
 		'wavlink,ws-wn572hp3-4g',
 		'zyxel,nwa55axe',
@@ -77,6 +82,7 @@ end
 function M.is_cellular_device()
 	if M.match('ath79', 'nand', {
 		'zte,mf281',
+		'glinet,gl-e750',
 		'glinet,gl-xe300',
 	}) then
 		return true

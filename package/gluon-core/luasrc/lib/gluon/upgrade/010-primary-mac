@@ -110,6 +110,7 @@ local primary_addrs = {
 		}},
 		{'rockchip', 'armv8', {
 			'friendlyarm,nanopi-r2s',
+			'friendlyarm,nanopi-r3s',
 			'friendlyarm,nanopi-r4s',
 		}},
 		{'x86'},
@@ -122,6 +123,7 @@ local primary_addrs = {
 		}},
 		{'kirkwood', 'generic', {
 			'linksys,e4200-v2',
+			'linksys,ea4500',
 		}},
 		{'mpc85xx', 'p1020', {
 			'aerohive,hiveap-330',

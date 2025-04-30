@@ -173,11 +173,11 @@ index 0000000000000000000000000000000000000000..077a563b6066cd1d3aee4b1e82328e8c
 + }
 + 
 + int system_bridge_addif(struct device *bridge, struct device *dev)
-diff --git a/target/linux/generic/config-5.15 b/target/linux/generic/config-5.15
-index 377553433846b5cec34e5d7036b8109f954aef5a..47c2ca0409654b4bfa08f32ed2869a6d077c8913 100644
---- a/target/linux/generic/config-5.15
-+++ b/target/linux/generic/config-5.15
-@@ -761,6 +761,7 @@ CONFIG_BRIDGE=y
+diff --git a/target/linux/generic/config-6.6 b/target/linux/generic/config-6.6
+index 46283ac3bd818d3b39ad8c57262bba101efff753..da3956c0fa55bd0b9c8ae3edacd28286066f357e 100644
+--- a/target/linux/generic/config-6.6
++++ b/target/linux/generic/config-6.6
+@@ -716,6 +716,7 @@ CONFIG_BRIDGE=y
  # CONFIG_BRIDGE_EBT_T_NAT is not set
  # CONFIG_BRIDGE_EBT_VLAN is not set
  CONFIG_BRIDGE_IGMP_SNOOPING=y
@@ -185,13 +185,13 @@ index 377553433846b5cec34e5d7036b8109f954aef5a..47c2ca0409654b4bfa08f32ed2869a6d
  # CONFIG_BRIDGE_MRP is not set
  # CONFIG_BRIDGE_NETFILTER is not set
  # CONFIG_BRIDGE_NF_EBTABLES is not set
-diff --git a/target/linux/generic/hack-5.15/602-bridge-Implement-MLD-Querier-wake-up-calls-Android-b.patch b/target/linux/generic/hack-5.15/602-bridge-Implement-MLD-Querier-wake-up-calls-Android-b.patch
+diff --git a/target/linux/generic/hack-6.6/602-bridge-Implement-MLD-Querier-wake-up-calls-Android-b.patch b/target/linux/generic/hack-6.6/602-bridge-Implement-MLD-Querier-wake-up-calls-Android-b.patch
 new file mode 100644
-index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a70f25d86
+index 0000000000000000000000000000000000000000..5a54131fab24f9cfaa9c51d51b3163bd2ecaf4c3
 --- /dev/null
-+++ b/target/linux/generic/hack-5.15/602-bridge-Implement-MLD-Querier-wake-up-calls-Android-b.patch
-@@ -0,0 +1,663 @@
-+From 4529dcf18d4c5e05d30cd2d6fabfbae201e6c347 Mon Sep 17 00:00:00 2001
++++ b/target/linux/generic/hack-6.6/602-bridge-Implement-MLD-Querier-wake-up-calls-Android-b.patch
+@@ -0,0 +1,690 @@
++From 9734fac17903cc0c67c63361525cc99f793fd6d7 Mon Sep 17 00:00:00 2001
 +From: =?UTF-8?q?Linus=20L=C3=BCssing?= <linus.luessing@c0d3.blue>
 +Date: Mon, 29 Jun 2020 19:04:05 +0200
 +Subject: [PATCH] bridge: Implement MLD Querier wake-up calls / Android bug
@@ -237,19 +237,23 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + net/ipv6/mcast_snoop.c       |   3 +-
 + 12 files changed, 386 insertions(+), 10 deletions(-)
 +
++diff --git a/include/linux/if_bridge.h b/include/linux/if_bridge.h
++index cff03a1dfd68..70b6f74653d0 100644
 +--- a/include/linux/if_bridge.h
 ++++ b/include/linux/if_bridge.h
-+@@ -59,6 +59,7 @@ struct br_ip_list {
-+ #define BR_MRP_LOST_IN_CONT	BIT(19)
-+ #define BR_TX_FWD_OFFLOAD	BIT(20)
-+ #define BR_BPDU_FILTER		BIT(21)
-++#define BR_MULTICAST_WAKEUPCALL	BIT(22)
++@@ -62,6 +62,7 @@ struct br_ip_list {
++ #define BR_PORT_MAB		BIT(22)
++ #define BR_NEIGH_VLAN_SUPPRESS	BIT(23)
++ #define BR_BPDU_FILTER		BIT(24)
+++#define BR_MULTICAST_WAKEUPCALL	BIT(25)
 + 
 + #define BR_DEFAULT_AGEING_TIME	(300 * HZ)
 + 
++diff --git a/include/net/addrconf.h b/include/net/addrconf.h
++index facb7a469efa..817a33d1c055 100644
 +--- a/include/net/addrconf.h
 ++++ b/include/net/addrconf.h
-+@@ -241,6 +241,7 @@ void ipv6_mc_unmap(struct inet6_dev *ide
++@@ -243,6 +243,7 @@ void ipv6_mc_unmap(struct inet6_dev *idev);
 + void ipv6_mc_remap(struct inet6_dev *idev);
 + void ipv6_mc_init_dev(struct inet6_dev *idev);
 + void ipv6_mc_destroy_dev(struct inet6_dev *idev);
@@ -257,16 +261,20 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + int ipv6_mc_check_mld(struct sk_buff *skb);
 + void addrconf_dad_failure(struct sk_buff *skb, struct inet6_ifaddr *ifp);
 + 
++diff --git a/include/uapi/linux/if_link.h b/include/uapi/linux/if_link.h
++index b29417908271..88b1c8a19bb4 100644
 +--- a/include/uapi/linux/if_link.h
 ++++ b/include/uapi/linux/if_link.h
-+@@ -537,6 +537,7 @@ enum {
-+ 	IFLA_BRPORT_MCAST_EHT_HOSTS_LIMIT,
-+ 	IFLA_BRPORT_MCAST_EHT_HOSTS_CNT,
++@@ -572,6 +572,7 @@ enum {
++ 	IFLA_BRPORT_NEIGH_VLAN_SUPPRESS,
++ 	IFLA_BRPORT_BACKUP_NHID,
 + 	IFLA_BRPORT_BPDU_FILTER,
 ++	IFLA_BRPORT_MCAST_WAKEUPCALL,
 + 	__IFLA_BRPORT_MAX
 + };
 + #define IFLA_BRPORT_MAX (__IFLA_BRPORT_MAX - 1)
++diff --git a/net/bridge/Kconfig b/net/bridge/Kconfig
++index 3c8ded7d3e84..1a11e22c7d51 100644
 +--- a/net/bridge/Kconfig
 ++++ b/net/bridge/Kconfig
 +@@ -48,6 +48,32 @@ config BRIDGE_IGMP_SNOOPING
@@ -302,9 +310,11 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + config BRIDGE_VLAN_FILTERING
 + 	bool "VLAN filtering"
 + 	depends on BRIDGE
++diff --git a/net/bridge/br_fdb.c b/net/bridge/br_fdb.c
++index a6d8cd9a5807..b70426806d45 100644
 +--- a/net/bridge/br_fdb.c
 ++++ b/net/bridge/br_fdb.c
-+@@ -84,6 +84,10 @@ static void fdb_rcu_free(struct rcu_head
++@@ -80,6 +80,10 @@ static void fdb_rcu_free(struct rcu_head *head)
 + {
 + 	struct net_bridge_fdb_entry *ent
 + 		= container_of(head, struct net_bridge_fdb_entry, rcu);
@@ -315,22 +325,24 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 	kmem_cache_free(br_fdb_cache, ent);
 + }
 + 
-+@@ -518,6 +522,12 @@ static struct net_bridge_fdb_entry *fdb_
-+ 		fdb->key.vlan_id = vid;
-+ 		fdb->flags = flags;
-+ 		fdb->updated = fdb->used = jiffies;
++@@ -400,6 +404,12 @@ static struct net_bridge_fdb_entry *fdb_create(struct net_bridge *br,
++ 	fdb->key.vlan_id = vid;
++ 	fdb->flags = flags;
++ 	fdb->updated = fdb->used = jiffies;
 ++
 ++#ifdef CONFIG_BRIDGE_IGMP_SNOOPING_WAKEUPCALLS
 ++		timer_setup(&fdb->wakeupcall_timer,
 ++			    br_multicast_send_wakeupcall, 0);
 ++#endif
 ++
-+ 		if (rhashtable_lookup_insert_fast(&br->fdb_hash_tbl,
-+ 						  &fdb->rhnode,
-+ 						  br_fdb_rht_params)) {
++ 	err = rhashtable_lookup_insert_fast(&br->fdb_hash_tbl, &fdb->rhnode,
++ 					    br_fdb_rht_params);
++ 	if (err) {
++diff --git a/net/bridge/br_input.c b/net/bridge/br_input.c
++index 4540c76d6079..d4644aab7dbf 100644
 +--- a/net/bridge/br_input.c
 ++++ b/net/bridge/br_input.c
-+@@ -169,8 +169,10 @@ int br_handle_frame_finish(struct net *n
++@@ -204,8 +204,10 @@ int br_handle_frame_finish(struct net *net, struct sock *sk, struct sk_buff *skb
 + 	if (dst) {
 + 		unsigned long now = jiffies;
 + 
@@ -342,9 +354,11 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 
 + 		if (now != dst->used)
 + 			dst->used = now;
++diff --git a/net/bridge/br_multicast.c b/net/bridge/br_multicast.c
++index c38244d60ff8..df3a4d4dbb8f 100644
 +--- a/net/bridge/br_multicast.c
 ++++ b/net/bridge/br_multicast.c
-+@@ -950,15 +950,16 @@ static struct sk_buff *br_ip6_multicast_
++@@ -1076,15 +1076,16 @@ static struct sk_buff *br_ip6_multicast_alloc_query(struct net_bridge_mcast *brm
 + 						    const struct in6_addr *group,
 + 						    bool with_srcs, bool over_llqt,
 + 						    u8 sflag, u8 *igmp_type,
@@ -363,7 +377,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 	__sum16 *csum = NULL;
 + 	struct ipv6hdr *ip6h;
 + 	struct mld_msg *mldq;
-+@@ -1040,9 +1041,13 @@ static struct sk_buff *br_ip6_multicast_
++@@ -1166,9 +1167,13 @@ static struct sk_buff *br_ip6_multicast_alloc_query(struct net_bridge_mcast *brm
 + 
 + 	/* ICMPv6 */
 + 	skb_set_transport_header(skb, skb->len);
@@ -380,7 +394,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 	*igmp_type = ICMPV6_MGM_QUERY;
 + 	switch (brmctx->multicast_mld_version) {
 + 	case 1:
-+@@ -1050,7 +1055,7 @@ static struct sk_buff *br_ip6_multicast_
++@@ -1176,7 +1181,7 @@ static struct sk_buff *br_ip6_multicast_alloc_query(struct net_bridge_mcast *brm
 + 		mldq->mld_type = ICMPV6_MGM_QUERY;
 + 		mldq->mld_code = 0;
 + 		mldq->mld_cksum = 0;
@@ -389,7 +403,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 		mldq->mld_reserved = 0;
 + 		mldq->mld_mca = *group;
 + 		csum = &mldq->mld_cksum;
-+@@ -1141,7 +1146,7 @@ static struct sk_buff *br_multicast_allo
++@@ -1267,7 +1272,7 @@ static struct sk_buff *br_multicast_alloc_query(struct net_bridge_mcast *brmctx,
 + 						    &ip6_dst, &group->dst.ip6,
 + 						    with_srcs, over_lmqt,
 + 						    sflag, igmp_type,
@@ -398,7 +412,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 	}
 + #endif
 + 	}
-+@@ -1623,6 +1628,169 @@ static void br_multicast_select_own_quer
++@@ -1777,6 +1782,169 @@ static void br_multicast_select_own_querier(struct net_bridge_mcast *brmctx,
 + #endif
 + }
 + 
@@ -557,7 +571,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 ++		delay =	ipv6_addr_any(group) ?
 ++				brmctx->multicast_query_response_interval :
 ++				brmctx->multicast_last_member_interval;
-++		delay = prandom_u32() % (3 * delay / 4);
+++		delay = get_random_u32_below(3 * delay / 4);
 ++
 ++		timer_reduce(&fdb->wakeupcall_timer, jiffies + delay);
 ++	}
@@ -568,7 +582,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + static void __br_multicast_send_query(struct net_bridge_mcast *brmctx,
 + 				      struct net_bridge_mcast_port *pmctx,
 + 				      struct net_bridge_port_group *pg,
-+@@ -1655,6 +1823,13 @@ again_under_lmqt:
++@@ -1809,6 +1977,13 @@ static void __br_multicast_send_query(struct net_bridge_mcast *brmctx,
 + 			dev_net(pmctx->port->dev), NULL, skb, NULL, skb->dev,
 + 			br_dev_queue_push_xmit);
 + 
@@ -582,7 +596,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 		if (over_lmqt && with_srcs && sflag) {
 + 			over_lmqt = false;
 + 			goto again_under_lmqt;
-+@@ -3805,6 +3980,99 @@ int br_multicast_rcv(struct net_bridge_m
++@@ -3976,6 +4151,99 @@ int br_multicast_rcv(struct net_bridge_mcast **brmctx,
 + 	return ret;
 + }
 + 
@@ -682,7 +696,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + static void br_multicast_query_expired(struct net_bridge_mcast *brmctx,
 + 				       struct bridge_mcast_own_query *query,
 + 				       struct bridge_mcast_querier *querier)
-+@@ -4333,6 +4601,15 @@ int br_multicast_set_vlan_router(struct
++@@ -4504,6 +4772,15 @@ int br_multicast_set_vlan_router(struct net_bridge_vlan *v, u8 mcast_router)
 + 	return err;
 + }
 + 
@@ -698,20 +712,22 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + static void br_multicast_start_querier(struct net_bridge_mcast *brmctx,
 + 				       struct bridge_mcast_own_query *query)
 + {
++diff --git a/net/bridge/br_netlink.c b/net/bridge/br_netlink.c
++index a760d5a5ad12..8fdabad8e10a 100644
 +--- a/net/bridge/br_netlink.c
 ++++ b/net/bridge/br_netlink.c
-+@@ -199,6 +199,9 @@ static inline size_t br_port_info_size(v
-+ #ifdef CONFIG_BRIDGE_IGMP_SNOOPING
++@@ -206,6 +206,9 @@ static inline size_t br_port_info_size(void)
 + 		+ nla_total_size(sizeof(u8))	/* IFLA_BRPORT_MULTICAST_ROUTER */
-+ #endif
++ 		+ nla_total_size(sizeof(u32))	/* IFLA_BRPORT_MCAST_N_GROUPS */
++ 		+ nla_total_size(sizeof(u32))	/* IFLA_BRPORT_MCAST_MAX_GROUPS */
+++#endif
 ++#ifdef CONFIG_BRIDGE_IGMP_SNOOPING_WAKEUPCALLS
 ++		+ nla_total_size(sizeof(u8))	/* IFLA_BRPORT_MCAST_WAKEUPCALL */
-++#endif
++ #endif
 + 		+ nla_total_size(sizeof(u16))	/* IFLA_BRPORT_GROUP_FWD_MASK */
 + 		+ nla_total_size(sizeof(u8))	/* IFLA_BRPORT_MRP_RING_OPEN */
-+ 		+ nla_total_size(sizeof(u8))	/* IFLA_BRPORT_MRP_IN_OPEN */
-+@@ -296,6 +299,11 @@ static int br_port_fill_attrs(struct sk_
-+ 			p->multicast_eht_hosts_cnt))
++@@ -313,6 +316,11 @@ static int br_port_fill_attrs(struct sk_buff *skb,
++ 			br_multicast_ngroups_get_max(&p->multicast_ctx)))
 + 		return -EMSGSIZE;
 + #endif
 ++#ifdef CONFIG_BRIDGE_IGMP_SNOOPING_WAKEUPCALLS
@@ -722,7 +738,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 
 + 	/* we might be called only with br->lock */
 + 	rcu_read_lock();
-+@@ -823,6 +831,7 @@ static const struct nla_policy br_port_p
++@@ -890,6 +898,7 @@ static const struct nla_policy br_port_policy[IFLA_BRPORT_MAX + 1] = {
 + 	[IFLA_BRPORT_PROXYARP_WIFI] = { .type = NLA_U8 },
 + 	[IFLA_BRPORT_MULTICAST_ROUTER] = { .type = NLA_U8 },
 + 	[IFLA_BRPORT_MCAST_TO_UCAST] = { .type = NLA_U8 },
@@ -730,12 +746,10 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 	[IFLA_BRPORT_MCAST_FLOOD] = { .type = NLA_U8 },
 + 	[IFLA_BRPORT_BCAST_FLOOD] = { .type = NLA_U8 },
 + 	[IFLA_BRPORT_VLAN_TUNNEL] = { .type = NLA_U8 },
-+@@ -950,6 +959,16 @@ static int br_setport(struct net_bridge_
-+ 		if (err)
-+ 			return err;
++@@ -1051,6 +1060,16 @@ static int br_setport(struct net_bridge_port *p, struct nlattr *tb[],
 + 	}
-++#endif
-++
++ #endif
++ 
 ++#ifdef CONFIG_BRIDGE_IGMP_SNOOPING_WAKEUPCALLS
 ++	if (tb[IFLA_BRPORT_MCAST_WAKEUPCALL]) {
 ++		u8 wakeupcall = nla_get_u8(tb[IFLA_BRPORT_MCAST_WAKEUPCALL]);
@@ -744,12 +758,16 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 ++		if (err)
 ++			return err;
 ++	}
-+ #endif
-+ 
+++#endif
+++
 + 	if (tb[IFLA_BRPORT_GROUP_FWD_MASK]) {
++ 		u16 fwd_mask = nla_get_u16(tb[IFLA_BRPORT_GROUP_FWD_MASK]);
++ 
++diff --git a/net/bridge/br_private.h b/net/bridge/br_private.h
++index 72d80fd943a8..b237c39edd35 100644
 +--- a/net/bridge/br_private.h
 ++++ b/net/bridge/br_private.h
-+@@ -269,6 +269,10 @@ struct net_bridge_fdb_entry {
++@@ -294,6 +294,10 @@ struct net_bridge_fdb_entry {
 + 	unsigned long			used;
 + 
 + 	struct rcu_head			rcu;
@@ -759,8 +777,8 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 ++#endif
 + };
 + 
-+ #define MDB_PG_FLAGS_PERMANENT	BIT(0)
-+@@ -382,6 +386,7 @@ struct net_bridge_port {
++ struct net_bridge_fdb_flush_desc {
++@@ -417,6 +421,7 @@ struct net_bridge_port {
 + 	u32				multicast_eht_hosts_limit;
 + 	u32				multicast_eht_hosts_cnt;
 + 	struct hlist_head		mglist;
@@ -768,7 +786,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + #endif
 + 
 + #ifdef CONFIG_SYSFS
-+@@ -1419,6 +1424,21 @@ br_multicast_ctx_options_equal(const str
++@@ -1504,6 +1509,21 @@ br_multicast_ctx_options_equal(const struct net_bridge_mcast *brmctx1,
 + }
 + #endif
 + 
@@ -790,9 +808,11 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + /* br_vlan.c */
 + #ifdef CONFIG_BRIDGE_VLAN_FILTERING
 + bool br_allowed_ingress(const struct net_bridge *br,
++diff --git a/net/bridge/br_sysfs_if.c b/net/bridge/br_sysfs_if.c
++index aee7c5902206..15ee27e1aa72 100644
 +--- a/net/bridge/br_sysfs_if.c
 ++++ b/net/bridge/br_sysfs_if.c
-+@@ -260,6 +260,21 @@ BRPORT_ATTR_FLAG(multicast_fast_leave, B
++@@ -260,6 +260,21 @@ BRPORT_ATTR_FLAG(multicast_fast_leave, BR_MULTICAST_FAST_LEAVE);
 + BRPORT_ATTR_FLAG(multicast_to_unicast, BR_MULTICAST_TO_UNICAST);
 + #endif
 + 
@@ -814,30 +834,34 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + static const struct brport_attribute *brport_attrs[] = {
 + 	&brport_attr_path_cost,
 + 	&brport_attr_priority,
-+@@ -286,6 +301,9 @@ static const struct brport_attribute *br
++@@ -285,6 +300,9 @@ static const struct brport_attribute *brport_attrs[] = {
++ 	&brport_attr_multicast_router,
 + 	&brport_attr_multicast_fast_leave,
 + 	&brport_attr_multicast_to_unicast,
-+ #endif
+++#endif
 ++#ifdef CONFIG_BRIDGE_IGMP_SNOOPING_WAKEUPCALLS
 ++	&brport_attr_multicast_wakeupcall,
-++#endif
++ #endif
 + 	&brport_attr_proxyarp,
 + 	&brport_attr_proxyarp_wifi,
-+ 	&brport_attr_multicast_flood,
++diff --git a/net/core/rtnetlink.c b/net/core/rtnetlink.c
++index 71797d44af4c..abe17f8c4939 100644
 +--- a/net/core/rtnetlink.c
 ++++ b/net/core/rtnetlink.c
-+@@ -55,7 +55,7 @@
-+ #include <net/net_namespace.h>
++@@ -61,7 +61,7 @@
++ #include "dev.h"
 + 
 + #define RTNL_MAX_TYPE		50
-+-#define RTNL_SLAVE_MAX_TYPE	41
-++#define RTNL_SLAVE_MAX_TYPE	42
++-#define RTNL_SLAVE_MAX_TYPE	45
+++#define RTNL_SLAVE_MAX_TYPE	46
 + 
 + struct rtnl_link {
 + 	rtnl_doit_func		doit;
++diff --git a/net/ipv6/mcast_snoop.c b/net/ipv6/mcast_snoop.c
++index 04d5fcdfa6e0..9a5061edbaf3 100644
 +--- a/net/ipv6/mcast_snoop.c
 ++++ b/net/ipv6/mcast_snoop.c
-+@@ -131,7 +131,7 @@ static inline __sum16 ipv6_mc_validate_c
++@@ -131,7 +131,7 @@ static inline __sum16 ipv6_mc_validate_checksum(struct sk_buff *skb)
 + 	return skb_checksum_validate(skb, IPPROTO_ICMPV6, ip6_compute_pseudo);
 + }
 + 
@@ -846,7 +870,7 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + {
 + 	unsigned int len = skb_transport_offset(skb) + sizeof(struct icmp6hdr);
 + 	unsigned int transport_len = ipv6_transport_len(skb);
-+@@ -150,6 +150,7 @@ static int ipv6_mc_check_icmpv6(struct s
++@@ -150,6 +150,7 @@ static int ipv6_mc_check_icmpv6(struct sk_buff *skb)
 + 
 + 	return 0;
 + }
@@ -854,3 +878,6 @@ index 0000000000000000000000000000000000000000..91dd13e51549f40aa11a01d53e11be1a
 + 
 + /**
 +  * ipv6_mc_check_mld - checks whether this is a sane MLD packet
++-- 
++2.45.2
++

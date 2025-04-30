@@ -63,6 +63,14 @@ elseif platform.match('ath79', 'generic', {
 	'ubnt,unifiac-pro',
 }) then
 	lan_ifname, wan_ifname = 'eth0.2', 'eth0.1'
+elseif platform.match('ipq40xx', 'generic', {
+	'avm,fritzbox-7530',
+}) then
+	lan_ifname, wan_ifname = 'lan2 lan3 lan4', 'lan1'
+elseif platform.match('ipq806x', 'generic', {
+	'ubnt,unifi-ac-hd',
+}) then
+	lan_ifname, wan_ifname = 'eth1', 'eth0'
 elseif platform.match('ramips', 'mt7621', {
 	'netgear,wac104',
 }) then
@@ -75,10 +83,6 @@ elseif platform.match('lantiq', 'xrx200', {
 	'arcadyan,vgv7510kw22-nor',
 }) then
 	lan_ifname, wan_ifname = 'lan1 lan2 lan3 lan4', 'wan'
-elseif platform.match('realtek', 'rtl838x', {
-	'd-link,dgs-1210-10p',
-}) then
-	lan_ifname, wan_ifname = 'lan2 lan3 lan4 lan5 lan6 lan7 lan8 lan9 lan10', 'lan1'
 end
 
 if wan_ifname and lan_ifname then

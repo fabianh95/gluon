@@ -86,6 +86,12 @@ device('buffalo-wzr-hp-g300nh-rtl8366s', 'buffalo_wzr-hp-g300nh-s')
 
 -- devolo
 
+device('devolo-dlan-pro-1200+-wifi-ac', 'devolo_dlan-pro-1200plus-ac', {
+	packages = ATH10K_PACKAGES_QCA9880,
+	factory = false,
+	broken = true, -- no power led
+})
+
 device('devolo-wifi-pro-1200e', 'devolo_dvl1200e', {
 	packages = ATH10K_PACKAGES_QCA9880,
 	factory = false,
@@ -360,6 +366,11 @@ device('sophos-ap15', 'sophos_ap15', {
 	packages = ATH10K_PACKAGES_QCA9880,
 	factory = false,
 	broken = true, -- no button and no external console port
+})
+
+device('sophos-ap15c', 'sophos_ap15c', {
+	packages = ATH10K_PACKAGES_QCA9880,
+	factory = false,
 })
 
 device('sophos-ap100', 'sophos_ap100', {

@@ -8,7 +8,7 @@ Gluon's releases are managed using `Git tags`_. If you are just getting
 started with Gluon we recommend to use the latest stable release of Gluon.
 
 Take a look at the `list of gluon releases`_ and notice the latest release,
-e.g. *v2023.2.3*. Always get Gluon using git and don't try to download it
+e.g. *v2023.2.4*. Always get Gluon using git and don't try to download it
 as a Zip archive as the archive will be missing version information.
 
 Please keep in mind that there is no "default Gluon" build; a site configuration
@@ -27,21 +27,26 @@ Dependencies
 To build Gluon, several packages need to be installed on the system. On a
 freshly installed Debian Bullseye system the following packages are required:
 
+* `clang`
 * `git` (to get Gluon and other dependencies)
 * `python3`
-* `python3-distutils`
+* `python3-dev`
+* `python3-pyelftools`
+* `python3-setuptools`
 * `build-essential`
-* `ecdsautils` (to sign firmware, see `contrib/sign.sh`)
 * `gawk`
 * `unzip`
 * `libncurses-dev` (actually `libncurses5-dev`)
 * `libz-dev` (actually `zlib1g-dev`)
 * `libssl-dev`
 * `libelf-dev` (to build x86-64)
+* `llvm`
 * `wget`
 * `rsync`
 * `time` (built-in `time` doesn't work)
 * `qemu-utils`
+* `ecdsautils` (to sign firmware, see `contrib/sign.sh`)
+* `swig`
 
 We also provide a container environment that already tracks all these dependencies. It quickly gets you up and running, if you already have either Docker or Podman installed locally.
 
@@ -53,7 +58,7 @@ Building the images
 -------------------
 
 To build Gluon, first check out the repository. Replace *RELEASE* with the
-version you'd like to checkout, e.g. *v2023.2.3*.
+version you'd like to checkout, e.g. *v2023.2.4*.
 
 ::
 

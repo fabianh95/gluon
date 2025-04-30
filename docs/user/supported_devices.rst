@@ -114,6 +114,7 @@ ath79-generic
 
 * Sophos
 
+  - AP15C
   - AP100
   - AP100c
   - AP55
@@ -223,6 +224,10 @@ ipq40xx-generic
   - FRITZ!Box 7530 [#eva_ramboot]_ [#lan_as_wan]_
   - FRITZ!Repeater 1200 [#eva_ramboot]_
 
+* Extreme Networks
+
+  - WS-AP3915i
+
 * GL.iNet
 
   - GL-AP1300
@@ -267,6 +272,10 @@ ipq806x-generic
 
   - R7800
 
+* Ubiquiti
+
+  - UniFi AC HD
+
 lantiq-xrx200
 -------------
 
@@ -280,6 +289,9 @@ lantiq-xrx200
   - FRITZ!Box 7360 SL [#avmflash]_ [#lan_as_wan]_
   - FRITZ!Box 7362 SL [#eva_ramboot]_ [#lan_as_wan]_
   - FRITZ!Box 7412 [#eva_ramboot]_
+
+lantiq-xrx200_legacy
+--------------------
 
 * TP-Link
 
@@ -306,15 +318,27 @@ mediatek-filogic
 
 * Cudy
 
+  - AP3000 Outdoor (v1)
+  - TR3000 (v1)
   - WR3000 (v1)
+
+* D-Link
+
+  - AQUILA PRO AI M30 A1
+  - AQUILA PRO AI M60 A1
 
 * GL.iNet
 
+  - GL-MT2500
   - GL-MT3000
 
 * NETGEAR
 
   - WAX220
+
+* OpenWrt
+
+  - One
 
 * Ubiquiti
 
@@ -334,10 +358,6 @@ mediatek-mt7622
 * Ubiquiti
 
   - UniFi 6 LR (v1)
-
-* Xiaomi
-
-  - AX3200 (RB03)
 
 mpc85xx-p1010
 -------------
@@ -451,15 +471,17 @@ ramips-mt7621
 
 * TP-Link
 
+  - EAX11 (v2)
+  - EAX12
+  - EAX15 (v2)
   - EAP615-Wall (v1)
   - RE500 (v1)
   - RE650 (v1)
 
 * Ubiquiti
 
-  - EdgeRouter X
-  - EdgeRouter X-SFP
   - UniFi 6 Lite
+  - UniFi nanoHD
 
 * Wavlink
 
@@ -485,6 +507,7 @@ ramips-mt76x8
 
 * Cudy
 
+  - TR1200 (v1)
   - WR1000 (v1)
 
 * GL.iNet
@@ -512,7 +535,7 @@ ramips-mt76x8
   - TL-MR6400 (v5)
   - TL-WA801ND (v5)
   - TL-WR841N (v13)
-  - TL-WR902AC (v3)
+  - TL-WR902AC (v3, v4)
 
 * VoCore
 
@@ -520,16 +543,10 @@ ramips-mt76x8
 
 * Xiaomi
 
-  - Xiaomi Mi Router 4A (100M Edition)
-  - Xiaomi Mi Router 4A (100M International Edition)
-  - Xiaomi Mi Router 4C
-
-realtek-rtl838x
----------------
-
-* D-Link
-
-  - DGS-1210-10P (F1)
+  - Xiaomi Mi Router 4A (100M Edition) - MIR4A
+  - Xiaomi Mi Router 4A (100M International Edition) - R4AC
+  - Xiaomi Mi Router 4A (100M International Edition v2) - R4ACv2
+  - Xiaomi Mi Router 4C - R4CM
 
 rockchip-armv8
 --------------
@@ -537,6 +554,7 @@ rockchip-armv8
 * FriendlyElec
 
   - NanoPi R2S
+  - NanoPi R3S
   - NanoPi R4S (4GB LPDDR4)
 
 sunxi-cortexa7
@@ -573,12 +591,6 @@ See also: :doc:`x86`
 
 Footnotes
 ---------
-
-.. [#device-class-tiny]
-  These devices only support a subset of Gluons capabilities due to flash or memory
-  size constraints. Devices are classified as tiny if they provide less than 7M of usable
-  flash space or have a low amount of system memory. For more information, see the
-  developer documentation: :ref:`device-class-definition`.
 
 .. [#avmflash]
   For instructions on how to flash AVM devices, visit https://fritz-tools.readthedocs.io

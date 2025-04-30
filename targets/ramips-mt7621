@@ -67,6 +67,11 @@ device('mercusys-mr70x-v1', 'mercusys_mr70x-v1')
 
 -- NETGEAR
 
+device('netgear-eax12', 'netgear_eax12', {
+	factory_ext = '.img',
+	aliases = {'netgear-eax11-v2', 'netgear-eax15-v2'},
+})
+
 device('netgear-ex6150', 'netgear_ex6150', {
 	factory_ext = '.chk',
 })
@@ -95,6 +100,10 @@ device('netgear-wndr3700-v5', 'netgear_wndr3700-v5', {
 
 -- TP-Link
 
+device('tp-link-archer-ax23-v1', 'tplink_archer-ax23-v1', {
+	broken = true, -- LAN LED not working - review after resolving #2756
+})
+
 device('tp-link-archer-c6-v3', 'tplink_archer-c6-v3', {
 	broken = true, -- LAN LED not working - review after resolving #2756
 })
@@ -109,6 +118,10 @@ device('tp-link-re650-v1', 'tplink_re650-v1')
 -- Ubiquiti
 
 device('ubiquiti-unifi-6-lite', 'ubnt_unifi-6-lite', {
+	factory = false,
+})
+
+device('ubiquiti-unifi-nanohd', 'ubnt_unifi-nanohd', {
 	factory = false,
 })
 
@@ -162,17 +175,3 @@ device('zyxel-wsm20', 'zyxel_wsm20', {
 	factory = false,
 })
 
-
--- Devices without WLAN
-
--- Ubiquiti
-
-device('ubiquiti-edgerouter-x', 'ubnt_edgerouter-x', {
-	factory = false,
-	packages = {'-hostapd-mini'},
-})
-
-device('ubiquiti-edgerouter-x-sfp', 'ubnt_edgerouter-x-sfp', {
-	factory = false,
-	packages = {'-hostapd-mini'},
-})
