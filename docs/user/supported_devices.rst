@@ -272,6 +272,10 @@ ipq806x-generic
 
   - R7800
 
+* TP-Link
+
+  - Archer C2600
+
 * Ubiquiti
 
   - UniFi AC HD

@@ -13,8 +13,8 @@ local QCA9984_PACKAGES = {'kmod-ath10k', '-kmod-ath10k-ct', 'ath10k-firmware-qca
 
 -- TP-Link
 device('tp-link-archer-c2600', 'tplink_c2600', {
+	factory_ext = '.bin',
 	packages = QCA9980_PACKAGES,
-	broken = true,
 })
 
 --
